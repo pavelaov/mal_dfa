@@ -1,0 +1,119 @@
+% chart_motiv: measured BERT-Base LAN latency breakdown (fig:motiv, Section IV-A)
+% Data: ../data/bert_breakdown.csv (model/perf_model.py, the App. F cost model validated
+% against the Section VIII measurements). Single column, 3.45 in wide.
+% Compile: pdflatex -interaction=nonstopmode chart_motiv.tex
+\RequirePackage{fix-cm}
+\documentclass[border=2pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage[scaled=0.92]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{amsmath,amssymb}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,calc,positioning}
+
+% ---------------- Office palette ----------------
+\definecolor{oOrange}{HTML}{ED7D31}\definecolor{oBlue}{HTML}{5B9BD5}
+\definecolor{oGrey}{HTML}{A5A5A5}\definecolor{oGold}{HTML}{FFC000}
+\definecolor{oDBlue}{HTML}{4472C4}\definecolor{oGreen}{HTML}{70AD47}
+\definecolor{gridc}{HTML}{D9D9D9}\definecolor{axisc}{HTML}{BFBFBF}
+\definecolor{txt}{HTML}{262626}
+\colorlet{estred}{red}
+
+% ---------------- font sizes (helvet scaled 0.92: effective size = 0.92 x nominal) ----------------
+\newcommand{\szT}{\fontsize{8}{9.2}\selectfont}     % ticks, axis labels (7.4 pt eff.)
+\newcommand{\szS}{\fontsize{7.6}{8.6}\selectfont}   % legend, data labels (7.0 pt eff.)
+\newcommand{\szE}{\fontsize{7.2}{8}\selectfont}     % in-bar chips (6.6 pt eff.)
+
+\pgfplotstableread[col sep=comma]{../data/bert_breakdown.csv}\bert
+\tikzset{chip/.style={font=\szS, text=txt, fill=white, inner sep=0.5pt, rounded corners=0.8pt},
+  tot/.style={font=\szS, text=txt, fill=white, anchor=west, inner sep=1pt}} % totals mask gridlines
+
+\pgfplotsset{
+  office/.style={
+    scale only axis, xbar stacked, bar width=9.2pt,
+    y dir=reverse, ymin=-0.62, ymax=4.62, ytick={0,...,4},
+    axis y line*=left, axis x line*=bottom,
+    y axis line style={draw=axisc, line width=0.6pt},
+    x axis line style={draw=none},
+    major tick length=0pt, minor tick length=0pt,
+    xmajorgrids, major grid style={draw=gridc, line width=0.5pt},
+    tick label style={font=\szT, text=txt},
+    label style={font=\szT, text=txt},
+    /pgf/number format/assume math mode=true,
+    xticklabel={\pgfmathprintnumber{\tick}},
+    xtick pos=bottom,
+    every axis plot/.append style={draw=none},
+    legend image code/.code={\fill[##1] (0pt,-2.7pt) rectangle (6.2pt,3.1pt);},
+  },
+  sOff/.style={fill=oOrange}, sIO/.style={fill=oGold}, sGemm/.style={fill=oBlue},
+  sNl/.style={fill=oGreen}, sNet/.style={fill=oDBlue}, sOth/.style={fill=oGrey},
+}
+
+\begin{document}
+\begin{tikzpicture}[font=\szT]
+% ======================= left segment: 0 to 7.5 s =======================
+\begin{axis}[office, name=L, width=87pt, height=70pt,
+    xmin=0, xmax=7.5, xtick={0,2,4,6},
+    yticklabels={GPU (SH), Trusted DFA (SH), Dealer-based (Mal), VIGOR-DFA w/o GaC (Mal), VIGOR-DFA (Mal)},
+    yticklabel style={font=\szT, text=txt, xshift=-1pt},
+    legend to name=motivleg, legend columns=2,
+    legend style={draw=none, font=\szS, column sep=7pt, row sep=-0.5pt, inner sep=0pt,
+                  /tikz/every even column/.append style={column sep=9pt}},
+    legend cell align=left]
+  \addplot+[sOff]  table[x=offline,   y expr=\coordindex]{\bert};
+  \addplot+[sIO]   table[x=keyio,     y expr=\coordindex]{\bert};
+  \addplot+[sGemm] table[x=gemm,      y expr=\coordindex]{\bert};
+  \addplot+[sNl]   table[x=nonlinear, y expr=\coordindex]{\bert};
+  \addplot+[sNet]  table[x=network,   y expr=\coordindex]{\bert};
+  \addplot+[sOth]  table[x=other,     y expr=\coordindex]{\bert};
+  \legend{Offline key/preproc distribution, Key/preproc I/O (CPU-GPU),
+          Authenticated or plain GEMM, FSS/nonlinear gates,
+          Online network, Other GPU work}
+  % in-bar chip anchors (c0 is DFA-derived and black; c2, c3, c4 are measured, black)
+  \coordinate (c0) at (axis cs:3.75,0);
+  \coordinate (c2) at (axis cs:3.75,2);
+  \coordinate (c3) at (axis cs:1.086,3);
+  \coordinate (c4) at (axis cs:1.433,4);
+  % totals of the malicious configurations (measured)
+  \node[tot] at (axis cs:5.871,3) {5.87};
+  \node[tot] at (axis cs:3.832,4) {3.83};
+  \coordinate (brk0) at (axis cs:7.5,0);
+  \coordinate (brk2) at (axis cs:7.5,2);
+  \draw[axisc, line width=0.6pt, densely dotted] (axis cs:0,1.5) -- (axis cs:7.5,1.5);
+\end{axis}
+% ======================= right segment: 15 to 55 s =======================
+\begin{axis}[office, name=R, at={($(L.south east)+(7pt,0)$)}, anchor=south west, width=54pt, height=70pt,
+    xmin=15, xmax=55, xtick={20,30,40,50}, yticklabels={}, y axis line style={draw=none},
+    y filter/.expression={(\coordindex==0 || \coordindex==2) ? y : nan}]
+  \addplot+[sOff]  table[x=offline,   y expr=\coordindex]{\bert};
+  \addplot+[sIO]   table[x=keyio,     y expr=\coordindex]{\bert};
+  \addplot+[sGemm] table[x=gemm,      y expr=\coordindex]{\bert};
+  \addplot+[sNl]   table[x=nonlinear, y expr=\coordindex]{\bert};
+  \addplot+[sNet]  table[x=network,   y expr=\coordindex]{\bert};
+  \addplot+[sOth]  table[x=other,     y expr=\coordindex]{\bert};
+  \node[tot] at (axis cs:43.851,2) {43.9};
+  \draw[axisc, line width=0.6pt, densely dotted] (axis cs:15,1.5) -- (axis cs:55,1.5);
+\end{axis}
+% ======================= in-bar chips, drawn above the bars =======================
+% GPU (SH) offline: 17.1 GB of DFA [dfa2026trusted] at the P0 LAN rate of 1 GB/s, so black;
+% all other chips are measured values (Section VIII).
+\node[chip, text=txt] at (c0) {offline 17.1};
+\node[chip] at (c2) {offline 37.6 (86\%)};
+\node[chip] at (c3) {2.17};
+\node[chip] at (c4) {2.60};
+% ======================= axis break marks =======================
+\coordinate (gapB) at ($(L.south east)!0.5!(R.south west)$);
+\foreach \dx in {-1.2pt,1.2pt}{
+  \draw[txt, line width=0.6pt] ($(gapB)+(\dx,0)+(-1.1pt,-2.8pt)$) -- ($(gapB)+(\dx,0)+(1.1pt,2.8pt)$);
+  \foreach \r in {brk0,brk2}{
+    \draw[txt, line width=0.5pt] ($(\r)+(3.5pt,0)+(\dx,0)+(-1.6pt,-5.6pt)$) -- ($(\r)+(3.5pt,0)+(\dx,0)+(1.6pt,5.6pt)$);
+  }
+}
+% ======================= x label and legend =======================
+\node[font=\szT, text=txt, anchor=north] at ($(L.south west)!0.5!(R.south east)+(0,-10pt)$) {BERT-Base LAN latency per query (s)};
+\coordinate (bbW) at (current bounding box.west); % left edge of the y-tick labels
+\node[anchor=south west, inner sep=0pt] (leg) at ($(bbW |- L.north)+(0,6pt)$) {\pgfplotslegendfromname{motivleg}};
+\end{tikzpicture}
+\end{document}

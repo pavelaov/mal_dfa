@@ -1,0 +1,7 @@
+component,seconds
+Authenticated GEMM,2.6
+Online network,0.615
+Other GPU work,0.338
+Nonlinear gates,0.131
+CPU-GPU transfer,0.133
+Triples + checks + NoC,0.0158

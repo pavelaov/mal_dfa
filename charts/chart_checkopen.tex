@@ -1,0 +1,104 @@
+% chart_checkopen: measured cost of freeze-before-challenge CheckOpen vs batch size m (fig:checkperf, Section VIII-C)
+% Data: ../data/checkopen.csv (model/perf_model.py, the App. F cost model validated against
+% the measured microbenchmarks; LAN 1 GB/s + 0.05 ms RTT, WAN 70 MB/s + 70 ms RTT).
+% Single column, 3.45 in wide. Compile: pdflatex -interaction=nonstopmode chart_checkopen.tex
+\RequirePackage{fix-cm}
+\documentclass[border=2pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage[scaled=0.92]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{amsmath,amssymb}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,calc,positioning}
+
+% ---------------- Office palette ----------------
+\definecolor{oOrange}{HTML}{ED7D31}\definecolor{oBlue}{HTML}{5B9BD5}
+\definecolor{oGrey}{HTML}{A5A5A5}\definecolor{oGold}{HTML}{FFC000}
+\definecolor{oDBlue}{HTML}{4472C4}\definecolor{oGreen}{HTML}{70AD47}
+\definecolor{gridc}{HTML}{D9D9D9}\definecolor{axisc}{HTML}{BFBFBF}
+\definecolor{txt}{HTML}{262626}
+\colorlet{estred}{red}
+
+% ---------------- font sizes (helvet scaled 0.92: effective size = 0.92 x nominal) ----------------
+\newcommand{\szT}{\fontsize{8}{9.2}\selectfont}     % ticks, axis labels (7.4 pt eff.)
+\newcommand{\szS}{\fontsize{7.6}{8.6}\selectfont}   % legend, notes (7.0 pt eff.)
+\newcommand{\szL}{\fontsize{7.2}{8}\selectfont}     % data labels (6.6 pt eff.)
+% exponents set at 7.2 pt nominal (6.6 pt eff.) so that no glyph falls below 6.5 pt
+\newcommand{\expo}[1]{\raisebox{0.62ex}{\fontsize{7.2}{8}\selectfont #1}}
+\newcommand{\pw}[1]{2\expo{#1}}
+\newcommand{\tw}[1]{10\expo{#1}}
+
+\pgfplotstableread[col sep=comma]{../data/checkopen.csv}\chk
+
+\pgfplotsset{
+  office/.style={
+    scale only axis, width=87pt, height=76pt,
+    xmin=45, xmax=92000,
+    xtick={64,256,1024,4096,16384,65536},
+    xticklabels={\pw{6},\pw{8},\pw{10},\pw{12},\pw{14},\pw{16}},
+    axis x line*=bottom, axis y line*=left,
+    x axis line style={draw=axisc, line width=0.6pt}, y axis line style={draw=none},
+    major tick length=0pt, minor tick length=0pt,
+    ymajorgrids, major grid style={draw=gridc, line width=0.5pt},
+    tick label style={font=\szT, text=txt}, label style={font=\szT, text=txt},
+    /pgf/number format/assume math mode=true,
+    xlabel={Batch size $m$ (elements)},
+    xlabel style={yshift=2pt},
+    legend style={draw=none, font=\szS, inner sep=0pt, cells={anchor=west}},
+    legend cell align=left,
+    legend image code/.code={\draw[mark repeat=2, mark phase=2, ##1] plot coordinates {(0pt,0pt) (6.5pt,0pt) (13pt,0pt)};},
+  },
+  lt/.style={line width=0.8pt, mark options={solid, line width=0.6pt}},
+}
+
+\begin{document}
+\begin{tikzpicture}[font=\szT]
+% ======================= (a) LAN latency =======================
+\begin{axis}[xmode=log, log basis x=2, office, name=A,
+    ymin=0, ymax=0.8, ytick={0,0.2,0.4,0.6,0.8},
+    yticklabel={\pgfmathprintnumber[fixed, precision=1, zerofill]{\tick}},
+    ylabel={LAN latency (ms)}, ylabel style={yshift=-3pt},
+    legend columns=3, legend style={at={(0.5,1.03)}, anchor=south, xshift=-11pt,
+      /tikz/every even column/.append style={column sep=5pt}}]
+  \addplot[lt, color=oBlue,   mark=o,         mark size=2.4pt]  table[x=m, y=lat_t1]{\chk};
+  \addplot[lt, color=oGrey,   mark=square,    mark size=1.8pt, densely dashed]  table[x=m, y=lat_t2]{\chk};
+  \addplot[lt, color=oOrange, mark=triangle*, mark size=1.5pt, densely dotted] table[x=m, y=lat_t3]{\chk};
+  \legend{$t{=}1$, $t{=}2$, $t{=}3$}
+  \addplot[txt!55, dashed, line width=0.5pt, forget plot] coordinates {(45,0.1) (92000,0.1)};
+  \coordinate (floorP) at (axis cs:512,0.1);
+  \coordinate (floorT) at (axis cs:58,0.34);
+  \coordinate (endA) at (axis cs:65536,0.6524);
+\end{axis}
+% analytical 2-RTT floor (design constant): black
+\draw[txt, line width=0.5pt, -{Stealth[length=3pt,width=2.6pt]}] ($(floorT)+(19pt,-8.4pt)$) -- ($(floorP)+(0,1pt)$);
+\node[font=\szL, text=txt, anchor=west, inner sep=1pt, align=left] at (floorT) {2-RTT floor\\(0.1~ms)};
+\node[font=\szL, text=txt, anchor=east, inner sep=1pt, xshift=-3.5pt] at (endA) {0.65};
+\node[font=\szL, text=txt, fill=white, inner sep=0.8pt, anchor=north west, align=left]
+  at ($(A.north west)+(3pt,-2pt)$) {$t{=}1,2,3$ differ\\ by $<$0.7\%};
+\node[font=\szT, text=txt, anchor=north] at ($(A.south)+(0,-19pt)$) {(a)};
+% ======================= (b) throughput, LAN vs WAN =======================
+\begin{axis}[xmode=log, log basis x=2, office, name=B, at={($(A.south east)+(40pt,0)$)}, anchor=south west,
+    ymode=log, log basis y=10, ymin=1e-4, ymax=1e3,
+    ytick={1e-4,1e-2,1,1e2}, yticklabels={\tw{\textminus4},\tw{\textminus2},1,100},
+    ylabel={Throughput (M elem./s)}, ylabel style={yshift=-3pt},
+    legend columns=2, legend style={at={(0.5,1.03)}, anchor=south, xshift=-11pt,
+      /tikz/every even column/.append style={column sep=5pt}}]
+  \addplot[lt, color=oOrange, mark=*, mark size=1.7pt] table[x=m, y=thr_t3]{\chk};
+  \addplot[lt, color=oDBlue, mark=square*, mark size=1.5pt, densely dashed] table[x=m, y=thr_wan_t3]{\chk};
+  \legend{LAN ($t{=}3$), WAN ($t{=}3$)}
+  \coordinate (endL) at (axis cs:65536,100.456);
+  \coordinate (begL) at (axis cs:64,0.632);
+  \coordinate (endW) at (axis cs:65536,0.4443);
+  \coordinate (begW) at (axis cs:64,0.0005);
+\end{axis}
+\node[font=\szL, text=txt, anchor=north, inner sep=1pt, yshift=-3pt] at (endL) {100};
+\node[font=\szL, text=txt, anchor=south, inner sep=1pt, yshift=3pt] at (begL) {0.63};
+\node[font=\szL, text=txt, anchor=north, inner sep=1pt, yshift=-3pt] at (endW) {0.44};
+\node[font=\szL, text=txt, anchor=north west, inner sep=1pt, xshift=2pt, yshift=-1pt] at (begW) {0.0005};
+\node[font=\szL, text=txt, anchor=south east, align=right, inner sep=1pt] at ($(B.south east)+(-2pt,2pt)$)
+  {WAN latency\\ 140--148~ms};
+\node[font=\szT, text=txt, anchor=north] at ($(B.south)+(0,-19pt)$) {(b)};
+\end{tikzpicture}
+\end{document}

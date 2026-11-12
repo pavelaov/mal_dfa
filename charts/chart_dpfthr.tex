@@ -1,0 +1,65 @@
+% chart_dpfthr: measured single-path DPF gate throughput vs input length n (fig:dpfthr, Section VIII-B)
+% Data: ../data/dpf_throughput.csv (model/perf_model.py, the App. F cost model validated
+% against the measured microbenchmarks; 28 nm, 720 MHz, 64 AES engines). Single column, 3.45 in.
+% Compile: pdflatex -interaction=nonstopmode chart_dpfthr.tex
+\RequirePackage{fix-cm}
+\documentclass[border=2pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage[scaled=0.92]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{amsmath,amssymb}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,calc,positioning}
+
+% ---------------- Office palette ----------------
+\definecolor{oOrange}{HTML}{ED7D31}\definecolor{oBlue}{HTML}{5B9BD5}
+\definecolor{oGrey}{HTML}{A5A5A5}\definecolor{oGold}{HTML}{FFC000}
+\definecolor{oDBlue}{HTML}{4472C4}\definecolor{oGreen}{HTML}{70AD47}
+\definecolor{gridc}{HTML}{D9D9D9}\definecolor{axisc}{HTML}{BFBFBF}
+\definecolor{txt}{HTML}{262626}
+\colorlet{estred}{red}
+
+% ---------------- font sizes (helvet scaled 0.92: effective size = 0.92 x nominal) ----------------
+\newcommand{\szT}{\fontsize{8}{9.2}\selectfont}     % ticks, axis labels (7.4 pt eff.)
+\newcommand{\szS}{\fontsize{7.6}{8.6}\selectfont}   % legend, notes (7.0 pt eff.)
+\newcommand{\szL}{\fontsize{7.2}{8}\selectfont}     % data labels (6.6 pt eff.)
+
+\pgfplotstableread[col sep=comma]{../data/dpf_throughput.csv}\dpf
+
+\begin{document}
+\begin{tikzpicture}[font=\szT]
+\begin{axis}[name=A, scale only axis, width=208pt, height=78pt,
+    ybar=2pt, bar width=11.2pt,
+    ymode=log, log basis y=10, ymin=10, ymax=5000,
+    ytick={10,100,1000}, yticklabels={10,100,1000},
+    xtick=data, xticklabels from table={\dpf}{n},
+    enlarge x limits=0.16,
+    axis x line*=bottom, axis y line*=left,
+    x axis line style={draw=axisc, line width=0.6pt}, y axis line style={draw=none},
+    major tick length=0pt, minor tick length=0pt,
+    ymajorgrids, major grid style={draw=gridc, line width=0.5pt},
+    tick label style={font=\szT, text=txt}, label style={font=\szT, text=txt},
+    /pgf/number format/assume math mode=true,
+    xlabel={DPF input length $n$ (bits), domain size 2\raisebox{0.62ex}{\fontsize{7.2}{8}\selectfont$n$}},
+    ylabel={Throughput (M gates/s)},
+    ylabel style={yshift=-3pt}, xlabel style={yshift=2pt},
+    every axis plot/.append style={draw=none},
+    nodes near coords, point meta=rawy,
+    nodes near coords style={font=\szL, text=txt, inner sep=0.8pt,
+      /pgf/number format/.cd, fixed, precision=0, assume math mode=true},
+    legend style={at={(0.5,1.04)}, anchor=south, xshift=-14pt, draw=none, font=\szS, legend columns=3,
+                  column sep=2pt, inner sep=0pt, /tikz/every even column/.append style={column sep=8pt}},
+    legend image code/.code={\fill[#1] (0pt,-2.7pt) rectangle (6.2pt,3.1pt);},
+    legend cell align=left]
+  \addplot+[fill=oBlue]   table[x expr=\coordindex, y=tdfa]{\dpf};
+  \addplot+[fill=oOrange] table[x expr=\coordindex, y=vigor]{\dpf};
+  \addplot+[fill=oGrey]   table[x expr=\coordindex, y=tagtree]{\dpf};
+  \legend{Trusted DFA (SH), VIGOR-DFA (Mal), {Tag-tree (Mal, $t{=}3$)}}
+  \coordinate (note) at (axis cs:3.55,4400);
+\end{axis}
+\node[font=\szS, text=txt, anchor=north east, align=right, inner sep=1pt] at (note)
+  {VIGOR-DFA keeps 91--94\% of SH throughput\\ and is 3.8--4.0$\times$ faster than tag trees};
+\end{tikzpicture}
+\end{document}

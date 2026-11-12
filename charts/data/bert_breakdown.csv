@@ -1,0 +1,6 @@
+config,offline,keyio,gemm,nonlinear,network,other
+GPU (SH),17.1,0.0,0.52,0.49,0.458,0.25
+Trusted DFA (SH),0.0,0.102,0.52,0.09,0.458,0.25
+Dealer-based malicious FSS,37.62,1.698,2.6,0.98,0.615,0.338
+VIGOR w/o GaC,0.0,2.172,2.6,0.131,0.615,0.353
+VIGOR-DFA,0.0,0.133,2.6,0.131,0.615,0.353

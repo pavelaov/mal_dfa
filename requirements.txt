@@ -1,0 +1,7 @@
+# VIGOR-DFA artifacts: runtime dependencies
+#
+# The whole artifact runs on the Python 3.10+ standard library; there are no required third-party dependencies, so `pip install -r requirements.txt` is a no-op by design.
+#
+# Optional (only for the vectorized path of the compiler cost model helpers in vigor_dfa/rtl_model.py; the code degrades gracefully to plain Python when numpy is absent):
+#
+# numpy>=1.21

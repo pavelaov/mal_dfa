@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vigor-dfa-artifacts"
+version = "1.0.0"
+description = "Reference implementation, compiler cost model and injection harness for the VIGOR-DFA trusted hardware acceleration of malicious-secure function secret sharing"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "The VIGOR-DFA authors"}]
+keywords = [
+    "function-secret-sharing",
+    "distributed-point-function",
+    "trusted-hardware",
+    "malicious-security",
+    "private-inference",
+    "private-information-retrieval",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security :: Cryptography",
+]
+# Standard library only (Python 3.10+).  numpy is optional and used by
+# vigor_dfa/rtl_model.py only when installed (graceful degradation).
+dependencies = []
+
+[project.optional-dependencies]
+numpy = ["numpy>=1.21"]
+
+[project.urls]
+Homepage = "https://example.invalid/vigor-dfa-artifacts"
+
+[tool.setuptools]
+# Ship only the library package; model/, eval/, tools/, charts/, docs/
+# and tests/ are repository-level artifact content.
+packages = ["vigor_dfa"]
