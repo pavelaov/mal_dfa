@@ -1,6 +1,6 @@
 """Tests for ``vigor_dfa.field``.
 
-Contract (paper evidence table / technical specification Sec. 15): exactly ``MERSENNE_CASES = 20004`` checks of the Mersenne reduction against direct arithmetic mod ``p``, made up of 4 field operations (add, sub, mul, neg) x 5001 deterministic random vectors.  Fixed seeds make the whole module reproducible.
+Contract: exactly ``MERSENNE_CASES = 20004`` checks of the Mersenne reduction against direct arithmetic mod ``p``, made up of 4 field operations (add, sub, mul, neg) x 5001 deterministic random vectors.  Fixed seeds make the whole module reproducible.
 """
 
 import random

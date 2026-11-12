@@ -35,9 +35,6 @@ dependencies = []
 [project.optional-dependencies]
 numpy = ["numpy>=1.21"]
 
-[project.urls]
-Homepage = "https://example.invalid/vigor-dfa-artifacts"
-
 [tool.setuptools]
 # Ship only the library package; model/, eval/, tools/, charts/, docs/
 # and tests/ are repository-level artifact content.

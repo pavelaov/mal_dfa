@@ -2,24 +2,12 @@
 
 Paper references
 ----------------
-* Representation (Paper Sec. V-A, label ``sec:proto-repr``): canonical
-  field elements are integers in ``[0, p)``; the canonical wire encoding
-  is one unsigned 64-bit word, and *noncanonical* encodings are
-  rejected, never reduced (technical specification Sec. 2).
-* Reduction: the exact Mersenne reduction used by the field kernels is
-  fixed in the implementation contract (technical specification
-  Sec. 15, "Exact A100 Mersenne arithmetic"): fold
-  ``x = (x & p) + (x >> 61)`` and then subtract ``p`` once if needed.
-  For a 122-bit product this is two folds plus one conditional
-  subtraction.  :func:`mersenne_reduce` implements the same rule for
-  arbitrary-width non-negative inputs and is the behavioural twin of
-  the RTL unit ``rtl/fu_mersenne61.v`` (Paper Sec. VI field unit array).
-* Sampling (technical specification Sec. 3): a uniform element is drawn
-  by rejection sampling over 61 pseudorandom bits, rejecting the single
-  value ``p`` (probability ``2**-61``), with a bounded retry loop.
+* Representation (Paper Sec. V-A, label ``sec:proto-repr``): canonical field elements are integers in ``[0, p)``; the canonical wire encoding is one unsigned 64-bit word, and *noncanonical* encodings are rejected, never reduced (technical specification Sec. 2).
+* Reduction: the exact Mersenne reduction used by the field kernels is fixed in the implementation contract ("Exact A100 Mersenne arithmetic"): fold ``x = (x & p) + (x >> 61)`` and then subtract ``p`` once if needed.
+  For a 122-bit product this is two folds plus one conditional subtraction.  :func:`mersenne_reduce` implements the same rule for arbitrary-width non-negative inputs and is the behavioural twin of the RTL unit ``rtl/fu_mersenne61.v`` (Paper Sec. VI field unit array).
+* Sampling (technical specification Sec. 3): a uniform element is drawn by rejection sampling over 61 pseudorandom bits, rejecting the single value ``p`` (probability ``2**-61``), with a bounded retry loop.
 
-The software reference is a functional model; it is not a claim about
-constant-time behavior.
+The software reference is a functional model; it is not a claim about constant-time behavior.
 """
 
 from __future__ import annotations
@@ -48,7 +36,7 @@ _MAX_REJECTION_TRIES = 256  # bounded per the technical spec Sec. 3
 
 def mersenne_reduce(x: int) -> int:
     """Reduce a non-negative integer to its canonical representative in
-    ``[0, p)`` by Mersenne folding (technical specification Sec. 15).
+    ``[0, p)`` by Mersenne folding.
 
     Each fold replaces ``x`` by ``(x & p) + (x >> 61)``, which is
     congruent to ``x`` modulo ``p`` and strictly smaller whenever
